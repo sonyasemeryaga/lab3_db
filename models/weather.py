@@ -4,9 +4,9 @@ from sqlalchemy import (
     Enum as SAEnum
 )
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
-
 
 class WindDirection(enum.Enum):
     N   = "N"
@@ -25,7 +25,6 @@ class WindDirection(enum.Enum):
     WNW = "WNW"
     NW  = "NW"
     NNW = "NNW"
-
 
 class Weather(Base):
     __tablename__ = "weather"
@@ -50,6 +49,8 @@ class Weather(Base):
     air_quality_PM10             = Column(Float)
     air_quality_us_epa_index     = Column(Integer)
     air_quality_gb_defra_index   = Column(Integer)
+
+    air_quality = relationship("AirQuality", back_populates="weather", uselist=False)
 
     def __repr__(self):
         return f"<Weather(country={self.country}, date={self.last_updated})>"
