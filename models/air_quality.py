@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, Float, ForeignKey
+from sqlalchemy import Column, Integer, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from models.weather import Base
-
 
 class AirQuality(Base):
     __tablename__ = "air_quality"
@@ -17,6 +16,7 @@ class AirQuality(Base):
     pm10             = Column(Float)
     us_epa_index     = Column(Integer)
     gb_defra_index   = Column(Integer)
+    is_safe_to_go_outside = Column(Boolean, nullable=True)
 
     weather = relationship("Weather", back_populates="air_quality")
 
