@@ -12,7 +12,6 @@ down_revision = None
 branch_labels = None
 depends_on = None
 
-
 def upgrade():
     op.create_table(
         "weather",
@@ -31,12 +30,12 @@ def upgrade():
             )
         ),
         sa.Column("sunrise", sa.String(20)),
-        sa.Column("air_quality_Carbon_Monoxide", sa.Float),
-        sa.Column("air_quality_Ozone", sa.Float),
-        sa.Column("air_quality_Nitrogen_dioxide", sa.Float),
-        sa.Column("air_quality_Sulphur_dioxide", sa.Float),
-        sa.Column("air_quality_PM25", sa.Float),
-        sa.Column("air_quality_PM10", sa.Float),
+        sa.Column("air_quality_carbon_monoxide", sa.Float),
+        sa.Column("air_quality_ozone", sa.Float),
+        sa.Column("air_quality_nitrogen_dioxide", sa.Float),
+        sa.Column("air_quality_sulphur_dioxide", sa.Float),
+        sa.Column("air_quality_pm25", sa.Float),
+        sa.Column("air_quality_pm10", sa.Float),
         sa.Column("air_quality_us_epa_index", sa.Integer),
         sa.Column("air_quality_gb_defra_index", sa.Integer),
     )

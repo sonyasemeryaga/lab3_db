@@ -13,7 +13,7 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    op.create_table(
+    air_quality_table = op.create_table(
         "air_quality",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("weather_id", sa.Integer, sa.ForeignKey("weather.id"), nullable=False),
@@ -27,57 +27,88 @@ def upgrade():
         sa.Column("gb_defra_index", sa.Integer),
     )
 
-    op.execute("""
-        INSERT INTO air_quality (
-            weather_id, carbon_monoxide, ozone, nitrogen_dioxide,
-            sulphur_dioxide, pm25, pm10, us_epa_index, gb_defra_index
-        )
-        SELECT
-            id,
-            "air_quality_Carbon_Monoxide",
-            "air_quality_Ozone",
-            "air_quality_Nitrogen_dioxide",
-            "air_quality_Sulphur_dioxide",
-            "air_quality_PM25",
-            "air_quality_PM10",
-            "air_quality_us_epa_index",
-            "air_quality_gb_defra_index"
-        FROM weather
-    """)
+    bind = op.get_bind()
+    meta = sa.MetaData()
+    weather_table = sa.Table("weather", meta, autoload_with=bind)
 
-    op.drop_column("weather", "air_quality_Carbon_Monoxide")
-    op.drop_column("weather", "air_quality_Ozone")
-    op.drop_column("weather", "air_quality_Nitrogen_dioxide")
-    op.drop_column("weather", "air_quality_Sulphur_dioxide")
-    op.drop_column("weather", "air_quality_PM25")
-    op.drop_column("weather", "air_quality_PM10")
+    op.execute(
+        sa.insert(air_quality_table).from_select(
+            [
+                "weather_id",
+                "carbon_monoxide",
+                "ozone",
+                "nitrogen_dioxide",
+                "sulphur_dioxide",
+                "pm25",
+                "pm10",
+                "us_epa_index",
+                "gb_defra_index",
+            ],
+            sa.select(
+                weather_table.c.id,
+                weather_table.c.air_quality_carbon_monoxide,
+                weather_table.c.air_quality_ozone,
+                weather_table.c.air_quality_nitrogen_dioxide,
+                weather_table.c.air_quality_sulphur_dioxide,
+                weather_table.c.air_quality_pm25,
+                weather_table.c.air_quality_pm10,
+                weather_table.c.air_quality_us_epa_index,
+                weather_table.c.air_quality_gb_defra_index,
+            )
+        )
+    )
+
+    op.drop_column("weather", "air_quality_carbon_monoxide")
+    op.drop_column("weather", "air_quality_ozone")
+    op.drop_column("weather", "air_quality_nitrogen_dioxide")
+    op.drop_column("weather", "air_quality_sulphur_dioxide")
+    op.drop_column("weather", "air_quality_pm25")
+    op.drop_column("weather", "air_quality_pm10")
     op.drop_column("weather", "air_quality_us_epa_index")
     op.drop_column("weather", "air_quality_gb_defra_index")
 
 
 def downgrade():
-    op.add_column("weather", sa.Column("air_quality_Carbon_Monoxide", sa.Float))
-    op.add_column("weather", sa.Column("air_quality_Ozone", sa.Float))
-    op.add_column("weather", sa.Column("air_quality_Nitrogen_dioxide", sa.Float))
-    op.add_column("weather", sa.Column("air_quality_Sulphur_dioxide", sa.Float))
-    op.add_column("weather", sa.Column("air_quality_PM25", sa.Float))
-    op.add_column("weather", sa.Column("air_quality_PM10", sa.Float))
+    op.add_column("weather", sa.Column("air_quality_carbon_monoxide", sa.Float))
+    op.add_column("weather", sa.Column("air_quality_ozone", sa.Float))
+    op.add_column("weather", sa.Column("air_quality_nitrogen_dioxide", sa.Float))
+    op.add_column("weather", sa.Column("air_quality_sulphur_dioxide", sa.Float))
+    op.add_column("weather", sa.Column("air_quality_pm25", sa.Float))
+    op.add_column("weather", sa.Column("air_quality_pm10", sa.Float))
     op.add_column("weather", sa.Column("air_quality_us_epa_index", sa.Integer))
     op.add_column("weather", sa.Column("air_quality_gb_defra_index", sa.Integer))
 
-    op.execute("""
-        UPDATE weather w
-        SET
-            "air_quality_Carbon_Monoxide"  = aq.carbon_monoxide,
-            "air_quality_Ozone"            = aq.ozone,
-            "air_quality_Nitrogen_dioxide" = aq.nitrogen_dioxide,
-            "air_quality_Sulphur_dioxide"  = aq.sulphur_dioxide,
-            "air_quality_PM25"             = aq.pm25,
-            "air_quality_PM10"             = aq.pm10,
-            "air_quality_us_epa_index"     = aq.us_epa_index,
-            "air_quality_gb_defra_index"   = aq.gb_defra_index
-        FROM air_quality aq
-        WHERE w.id = aq.weather_id
-    """)
+    bind = op.get_bind()
+    dialect = bind.dialect.name
+
+    if dialect == 'postgresql':
+        op.execute("""
+            UPDATE weather w
+            SET
+                air_quality_carbon_monoxide  = aq.carbon_monoxide,
+                air_quality_ozone            = aq.ozone,
+                air_quality_nitrogen_dioxide = aq.nitrogen_dioxide,
+                air_quality_sulphur_dioxide  = aq.sulphur_dioxide,
+                air_quality_pm25             = aq.pm25,
+                air_quality_pm10             = aq.pm10,
+                air_quality_us_epa_index     = aq.us_epa_index,
+                air_quality_gb_defra_index   = aq.gb_defra_index
+            FROM air_quality aq
+            WHERE w.id = aq.weather_id
+        """)
+    else:
+        op.execute("""
+            UPDATE weather w
+            JOIN air_quality aq ON w.id = aq.weather_id
+            SET
+                w.air_quality_carbon_monoxide  = aq.carbon_monoxide,
+                w.air_quality_ozone            = aq.ozone,
+                w.air_quality_nitrogen_dioxide = aq.nitrogen_dioxide,
+                w.air_quality_sulphur_dioxide  = aq.sulphur_dioxide,
+                w.air_quality_pm25             = aq.pm25,
+                w.air_quality_pm10             = aq.pm10,
+                w.air_quality_us_epa_index     = aq.us_epa_index,
+                w.air_quality_gb_defra_index   = aq.gb_defra_index
+        """)
 
     op.drop_table("air_quality")
