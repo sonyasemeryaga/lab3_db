@@ -1,8 +1,8 @@
 import pandas as pd
 from datetime import datetime
 from database.connection import get_session
-from models.weather import Weather, WindDirection
-from models.air_quality import AirQuality
+from models.weather import WindDirection
+from utils.weather_initial import WeatherInitial
 
 CSV_PATH = "GlobalWeatherRepository.csv"
 
@@ -27,7 +27,7 @@ def load_data():
 
     try:
         for i, row in df.iterrows():
-            record = Weather(
+            record = WeatherInitial(
                 country                      = str(row["country"]),
                 location_name                = str(row["location_name"]),
                 last_updated                 = parse_datetime(row["last_updated"]),
